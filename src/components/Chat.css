@@ -132,13 +132,13 @@
   position: relative;
   font-size: 16px;
   padding: 10px;
-  border-radius: 10px;
+  border-radius: 16px;
   background-color: #ffffff;
   padding-top: 22px;
   word-wrap: break-word;
   max-width: 320px;
   margin-top: 4px;
-  color: white;
+  color: black;
 }
 
 .chat__message--message {
@@ -148,6 +148,8 @@
 .chat__message--sender {
   margin-left: auto;
   background-color: #3979fd;
+  color: white;
+  border-radius: 16px 16px 1px 16px;
 }
 
 .chat__lastMessage {
