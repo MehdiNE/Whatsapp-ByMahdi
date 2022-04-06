@@ -1,7 +1,7 @@
 import { Button } from "@material-ui/core";
 import "./Login.css";
 import { auth, provider } from "../firebase";
-import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import img from "./whatsapp.svg";
 
 export default function Login() {
   const login = () => {
@@ -12,7 +12,7 @@ export default function Login() {
     <div className="app">
       <div className="login">
         <div className="login__container">
-          <WhatsAppIcon fontSize="large" />
+          <img src={img} alt="logo" />
           <div className="login__text">
             <h1>Sign in to WhatsApp</h1>
           </div>
