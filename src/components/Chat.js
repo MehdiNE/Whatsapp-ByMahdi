@@ -1,36 +1,44 @@
-import React from "react";
-import { useHistory, useParams } from "react-router-dom";
-import "./Chat.css";
-import useRoom from "../hooks/useRoom";
-import ChatMessages from "./ChatMessages";
-import ChatFooter from "./ChatFooter";
-import MediaPreview from "./MediaPreview";
-import Compressor from "compressorjs";
+import React, { useRef } from 'react';
+import { useHistory, useParams } from 'react-router-dom';
+import './Chat.css';
+import useRoom from '../hooks/useRoom';
+import ChatMessages from './ChatMessages';
+import ChatFooter from './ChatFooter';
+import MediaPreview from './MediaPreview';
+import Compressor from 'compressorjs';
 import {
   Avatar,
   CircularProgress,
   IconButton,
   Menu,
   MenuItem,
-} from "@material-ui/core";
-import { AddPhotoAlternate, ArrowBack, MoreVert } from "@material-ui/icons";
-import { v4 as uuid } from "uuid";
-import { audioStorage, createTimestamp, db, storage } from "../firebase";
-import useChatMessages from "../hooks/useChatMessages";
+} from '@material-ui/core';
+import { AddPhotoAlternate, ArrowBack, MoreVert } from '@material-ui/icons';
+import { v4 as uuid } from 'uuid';
+import { audioStorage, createTimestamp, db, storage } from '../firebase';
+import useChatMessages from '../hooks/useChatMessages';
 
 export default function Chat({ user, page }) {
   const [image, setImage] = React.useState(null);
-  const [input, setInput] = React.useState("");
+  const [input, setInput] = React.useState('');
   const [isDeleting, setDeleting] = React.useState(false);
   const [openMenu, setOpenMenu] = React.useState(null);
-  const [src, setSrc] = React.useState("");
-  const [audioId, setAudioId] = React.useState("");
+  const [src, setSrc] = React.useState('');
+  const [audioId, setAudioId] = React.useState('');
+
+  const endOfMessagesRef = useRef(null);
 
   const { roomId } = useParams();
   const history = useHistory();
   const messages = useChatMessages(roomId);
   const room = useRoom(roomId, user.uid);
 
+  const ScrollToBottom = () => {
+    endOfMessagesRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
   function onChange(event) {
     setInput(event.target.value);
   }
@@ -38,8 +46,8 @@ export default function Chat({ user, page }) {
   async function sendMessage(event) {
     event.preventDefault();
 
-    if (input.trim() || (input === "" && image)) {
-      setInput("");
+    if (input.trim() || (input === '' && image)) {
+      setInput('');
       if (image) {
         closePreview();
       }
@@ -51,7 +59,7 @@ export default function Chat({ user, page }) {
             uid: user.uid,
             timestamp: createTimestamp(),
             time: new Date().toUTCString(),
-            imageUrl: "uploading",
+            imageUrl: 'uploading',
             imageName,
           }
         : {
@@ -62,9 +70,9 @@ export default function Chat({ user, page }) {
             time: new Date().toUTCString(),
           };
 
-      db.collection("users")
+      db.collection('users')
         .doc(user.uid)
-        .collection("chats")
+        .collection('chats')
         .doc(roomId)
         .set({
           name: room.name,
@@ -73,9 +81,9 @@ export default function Chat({ user, page }) {
         });
 
       const doc = await db
-        .collection("rooms")
+        .collection('rooms')
         .doc(roomId)
-        .collection("messages")
+        .collection('messages')
         .add(newMessage);
 
       if (image) {
@@ -83,13 +91,13 @@ export default function Chat({ user, page }) {
           quality: 0.8,
           maxWidth: 1920,
           async success(result) {
-            setSrc("");
+            setSrc('');
             setImage(null);
             await storage.child(imageName).put(result);
             const url = await storage.child(imageName).getDownloadURL();
-            db.collection("rooms")
+            db.collection('rooms')
               .doc(roomId)
-              .collection("messages")
+              .collection('messages')
               .doc(doc.id)
               .update({
                 imageUrl: url,
@@ -98,6 +106,7 @@ export default function Chat({ user, page }) {
         });
       }
     }
+    ScrollToBottom();
   }
 
   function showPreview(event) {
@@ -114,7 +123,7 @@ export default function Chat({ user, page }) {
   }
 
   function closePreview() {
-    setSrc("");
+    setSrc('');
     setImage(null);
   }
 
@@ -123,8 +132,8 @@ export default function Chat({ user, page }) {
     setDeleting(true);
 
     try {
-      const roomRef = db.collection("rooms").doc(roomId);
-      const roomMessages = await roomRef.collection("messages").get();
+      const roomRef = db.collection('rooms').doc(roomId);
+      const roomMessages = await roomRef.collection('messages').get();
       const audioFiles = [];
       const imageFiles = [];
       roomMessages.docs.forEach((doc) => {
@@ -140,18 +149,18 @@ export default function Chat({ user, page }) {
         ...imageFiles.map((image) => storage.child(image).delete()),
         ...audioFiles.map((audio) => audioStorage.child(audio).delete()),
         db
-          .collection("users")
+          .collection('users')
           .doc(user.uid)
-          .collection("chats")
+          .collection('chats')
           .doc(roomId)
           .delete(),
         roomRef.delete(),
       ]);
     } catch (error) {
-      console.error("Error deleting room: ", error.message);
+      console.error('Error deleting room: ', error.message);
     } finally {
       setDeleting(false);
-      page.isMobile ? history.goBack() : history.replace("/chats");
+      page.isMobile ? history.goBack() : history.replace('/chats');
     }
   }
 
@@ -161,7 +170,7 @@ export default function Chat({ user, page }) {
 
       <div className="chat__header">
         {page.isMobile && (
-          <IconButton onClick={history.goBack} style={{ color: "white" }}>
+          <IconButton onClick={history.goBack} style={{ color: 'white' }}>
             <ArrowBack />
           </IconButton>
         )}
@@ -179,19 +188,19 @@ export default function Chat({ user, page }) {
         <div className="chat__header--right">
           <input
             id="image"
-            style={{ display: "none" }}
+            style={{ display: 'none' }}
             accept="image/*"
             type="file"
             onChange={showPreview}
           />
-          <IconButton style={{ color: "white" }}>
-            <label style={{ cursor: "pointer", height: 24 }} htmlFor="image">
+          <IconButton style={{ color: 'white' }}>
+            <label style={{ cursor: 'pointer', height: 24 }} htmlFor="image">
               <AddPhotoAlternate />
             </label>
           </IconButton>
           <IconButton
             onClick={(event) => setOpenMenu(event.currentTarget)}
-            style={{ color: "white" }}
+            style={{ color: 'white' }}
           >
             <MoreVert />
           </IconButton>
@@ -237,193 +246,7 @@ export default function Chat({ user, page }) {
           <CircularProgress />
         </div>
       )}
+      <div ref={endOfMessagesRef} />
     </div>
   );
 }
-
-// import React, { useState } from "react";
-// import "./Chat.css";
-// import useRoom from "../hooks/useRoom";
-// import ChatMessages from "./ChatMessages";
-// import ChatFooter from "./ChatFooter";
-// import MediaPreview from "./MediaPreview";
-// import Compressor from "compressorjs";
-// import { useParams } from "react-router-dom";
-// import { Avatar, IconButton, Menu, MenuItem } from "@material-ui/core";
-// import { useHistory } from "react-router-dom";
-// import {
-//   AddPhotoAlternate,
-//   ArrowBack,
-//   MoreVert,
-//   RemoveFromQueue,
-// } from "@material-ui/icons";
-// import { v4 as uuid } from "uuid";
-// import { createTimestamp, db, storage } from "../firebase";
-// import useChatMessages from "../hooks/useChatMessages";
-
-// export default function Chat({ user, page }) {
-//   const [image, setImage] = useState(null);
-//   const [input, setInput] = useState("");
-//   const [src, setSrc] = useState("");
-//   const [audioId, setAudioId] = React.useState("");
-
-//   const { roomId } = useParams();
-//   const history = useHistory();
-//   const messages = useChatMessages(roomId);
-//   const room = useRoom(roomId, user.uid);
-
-//   const onChange = (event) => {
-//     setInput(event.target.value);
-//   };
-
-//   async function sendMessage(event) {
-//     event.preventDefault();
-
-//     if (input.trim() || (input === "" && image)) {
-//       setInput("");
-//       if (image) {
-//         closePreview();
-//       }
-//       const imageName = uuid();
-//       const newMesaage = image
-//         ? {
-//             name: user.displayName,
-//             message: input,
-//             uid: user.uid,
-//             timestamp: createTimestamp(),
-//             time: new Date().toUTCString(),
-//             imageUrl: "uploading",
-//             imageName,
-//           }
-//         : {
-//             name: user.displayName,
-//             message: input,
-//             uid: user.uid,
-//             timestamp: createTimestamp(),
-//             time: new Date().toUTCString(),
-//           };
-
-//       db.collection("users")
-//         .doc(user.uid)
-//         .collection("chats")
-//         .doc(roomId)
-//         .set({
-//           name: room.name,
-//           photoURL: RemoveFromQueue.photoURL || null,
-//           timestamp: createTimestamp(),
-//         });
-
-//       const doc = await db
-//         .collection("rooms")
-//         .doc(roomId)
-//         .collection("messages")
-//         .add(newMesaage);
-
-//       if (image) {
-//         new Compressor(image, {
-//           quality: 0.8,
-//           maxWidth: 1920,
-//           async success(result) {
-//             setSrc("");
-//             setImage(null);
-//             await storage.child(imageName).put(result);
-//             const url = await storage.child(imageName).getDownloadURL();
-//             db.collection("rooms")
-//               .doc(roomId)
-//               .collection("messages")
-//               .doc(doc.id)
-//               .update({ image: url });
-//           },
-//         });
-//       }
-//     }
-//   }
-
-//   const showPreview = (event) => {
-//     const file = event.target.files[0];
-
-//     if (file) {
-//       setImage(file);
-//       const reader = new FileReader();
-//       reader.readAsDataURL(file);
-//       reader.onload = () => {
-//         setSrc(reader.result);
-//       };
-//     }
-//   };
-
-//   const closePreview = () => {
-//     setSrc("");
-//     setImage(null);
-//   };
-
-//   return (
-//     <div className="chat">
-//       <div style={{ height: page.height }} className="chat__background" />
-
-//       <div className="chat__header">
-//         {page.isMobile && (
-//           <IconButton onClick={history.goBack}>
-//             <ArrowBack />
-//           </IconButton>
-//         )}
-
-//         <div className="avatar__container">
-//           <Avatar src={room?.photoURL} />
-//         </div>
-
-//         <div className="chat__header--info">
-//           <h3 style={{ width: page.isMobile && page.width - 165 }}>
-//             {room?.name}
-//           </h3>
-//         </div>
-
-//         <div className="chat__header--right">
-//           <input
-//             id="image"
-//             style={{ display: "none" }}
-//             accept="image/"
-//             type="file"
-//             onChange={showPreview}
-//           />
-//           <IconButton>
-//             <label style={{ cursor: "pointer", height: 24 }} htmlFor="image">
-//               <AddPhotoAlternate />
-//             </label>
-//           </IconButton>
-//           <IconButton>
-//             <MoreVert />
-//           </IconButton>
-//           {/* <Menu id="menu" keepMounted open="false">
-//             <MenuItem>Delete Room</MenuItem>
-//           </Menu> */}
-//         </div>
-//       </div>
-
-//       <div className="chat__body--container">
-//         <div className="chat__body" style={{ height: page.height - 68 }}>
-//           <ChatMessages
-//             messages={messages}
-//             user={user}
-//             roomId={roomId}
-//             audioId={audioId}
-//             setAudioId={setAudioId}
-//           />
-//         </div>
-//       </div>
-
-//       <MediaPreview src={src} closePreview={closePreview} />
-
-//       <ChatFooter
-//         input={input}
-//         onChange={onChange}
-//         sendMessage={sendMessage}
-//         image={image}
-//         user={user}
-//         room={room}
-//         roomId={roomId}
-//         setAudioId={setAudioId}
-//       />
-//     </div>
-//   );
-// }
